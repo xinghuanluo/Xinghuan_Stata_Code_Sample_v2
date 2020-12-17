@@ -96,9 +96,8 @@ keep if ye == 1990
 save `only_1990'
 restore
 
-// Question 1
+
 // I generated the required variables in these two tempfiles and merge them together later
-//
 cap ssc install asgen
 foreach file in `only_1970' `only_1990' {
 	use `file', clear
@@ -133,8 +132,8 @@ use `all_70_90', clear
 merge 1:1 _n using `prepare_scatter', nogen
 
 
-// Question 2
-// I created the required graph in question 2
+
+
 local scatter_settings msize(small) jitter(4)
 twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=unique_num_obs], `scatter_settings' color(blue)) ///
 	   (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1990 [fweight=unique_num_obs], `scatter_settings' color(dkorange)), ///
@@ -143,8 +142,8 @@ twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=uniq
 	   note("The relative size of the each scatter point represents the number of observations it has.") 
 graph export "$graphs/only_scatter.png", as(png) replace 
 
-// Question 3
-// I created the required graph in question 3
+
+
 local scatter_settings msize(small) jitter(4)
 local line_settings lcolor(gs0) sort
 twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=unique_num_obs], `scatter_settings' color(blue)) ///
@@ -159,7 +158,7 @@ twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=uniq
 			 "The relative size of the each scatter point represents the number of observations it has.")
 graph export "$graphs/scatter_fitted.png", as(png) replace 
 
-// Question 6
+
 // I first collapsed the data set and used texsave to create the required graph in question 6
 collapse (min) min_hp = hp (max) max_hp = hp (mean) mean_fuel = avg_fuel (count) num_obs = avg_fuel if ye == 1990, by(decile_grp)
 egen hp_interval = concat(min_hp max_hp), punct("--")
@@ -184,7 +183,7 @@ label var ye "Year"
 label var li "Fuel Consumption"
 label var eurpr "Price in Euro"
 
-// Question 1 
+
 // I generated Y_ijt
 bysort ye ma: gen N_jt = pop / 4
 bysort ye ma model: egen total_model_sale = total(qu)
@@ -194,11 +193,11 @@ gen S_0jt = 1 - (total_car_sale / N_jt)
 
 bysort ye ma model: gen Y_ijt = log(S_ijt) - log(S_0jt)
 
-// Question 2
+
 eststo clear
 eststo model1: qui reg Y_ijt li eurpr, r
 
-//Question 4
+
 // I first transformed ma and model into numberic variables so that I could include them as fixed effecs in the regression
 encode ma, generate(market)
 encode model, generate(model_code)
