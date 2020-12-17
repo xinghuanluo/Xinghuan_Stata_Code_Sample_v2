@@ -1,11 +1,13 @@
 
 ********************************************************************
-* Theis code file has 3 parts:
-* - Part 1 Data Cleaning
-* - Part 2 Analyze Patterns across 4 Years
-* - Part 3 Analyze Pattern within Each Year
+* To be consistent with the Data Task instruction, I started with secion 2. 
 
-************************Part 1 Data Cleaning***********************
+* Theis code file has 3 parts:
+* - Part 2 Data Cleaning
+* - Part 3 Analyze Patterns across 4 Years
+* - Part 4 Analyze Pattern within Each Year
+
+************************Part 2 Data Cleaning***********************
 clear
 set more off
 set varabbrev off
@@ -16,7 +18,7 @@ global code_sample "D:/OneDrive - The University of Chicago/coding/Xinghuan_Stat
 // I defined path to save the results 
 local top_file `""scripts" "results" "raw_data""'
 foreach file_path in `top_file' {
-	cap mkdir "$code_sample/`file_path'"
+    cap mkdir "$bfi_test/`file_path'"
 	global `file_path' "$bfi_test/`file_path'"
 }
 
@@ -78,7 +80,7 @@ foreach var in li1 li2 li3 {
 save "$merged_data/cleaning_done_data.dta", replace
 
 
-************************Part 2 Data Exploration ***********************
+************************Part 3 Data Exploration ***********************
 // I saved the original data set so that I could use it later
 tempfile original_data
 save `original_data'
@@ -96,21 +98,27 @@ keep if ye == 1990
 save `only_1990'
 restore
 
-
+// Question 1
 // I generated the required variables in these two tempfiles and merge them together later
+//
+cap program drop data_manipulation
+program define data_manipulation
+	foreach temp_file of local 0 {
+		use `temp_file', clear
+		pctile hp_pct = hp, nq(10)
+		xtile decile_grp = hp, cut(hp_pct)
+		bysort decile_grp: asgen avg_fuel = li, weight(qu)
+		bysort decile_grp: egen mid_hp = median(hp)
+		bysort decile_grp: egen num_obs = count(avg_fuel)
+		gen log_hp = log(hp)
+		reg avg_fuel hp log_hp [pweight=qu]	
+		predict y_hat
+		save `temp_file', replace 
+	}
+end 
+
 cap ssc install asgen
-foreach file in `only_1970' `only_1990' {
-	use `file', clear
-	pctile hp_pct = hp, nq(10)
-	xtile decile_grp = hp, cut(hp_pct)
-	bysort decile_grp: asgen avg_fuel = li, weight(qu)
-	bysort decile_grp: egen mid_hp = median(hp)
-	bysort decile_grp: egen num_obs = count(avg_fuel)
-	gen log_hp = log(hp)
-	reg avg_fuel hp log_hp [pweight=qu]	
-	predict y_hat
-	save `file', replace 
-}
+data_manipulation `only_1970' `only_1990'
 
 use `only_1970', clear
 append using `only_1990'
@@ -132,8 +140,8 @@ use `all_70_90', clear
 merge 1:1 _n using `prepare_scatter', nogen
 
 
-
-
+// Question 2
+// I created the required graph in question 2
 local scatter_settings msize(small) jitter(4)
 twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=unique_num_obs], `scatter_settings' color(blue)) ///
 	   (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1990 [fweight=unique_num_obs], `scatter_settings' color(dkorange)), ///
@@ -142,8 +150,8 @@ twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=uniq
 	   note("The relative size of the each scatter point represents the number of observations it has.") 
 graph export "$graphs/only_scatter.png", as(png) replace 
 
-
-
+// Question 3
+// I created the required graph in question 3
 local scatter_settings msize(small) jitter(4)
 local line_settings lcolor(gs0) sort
 twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=unique_num_obs], `scatter_settings' color(blue)) ///
@@ -158,7 +166,7 @@ twoway (scatter unique_avg_fuel unique_mid_hp if unique_ye == 1970 [fweight=uniq
 			 "The relative size of the each scatter point represents the number of observations it has.")
 graph export "$graphs/scatter_fitted.png", as(png) replace 
 
-
+// Question 6
 // I first collapsed the data set and used texsave to create the required graph in question 6
 collapse (min) min_hp = hp (max) max_hp = hp (mean) mean_fuel = avg_fuel (count) num_obs = avg_fuel if ye == 1990, by(decile_grp)
 egen hp_interval = concat(min_hp max_hp), punct("--")
@@ -176,14 +184,14 @@ local footnote footnote("Notes: Horsepower column represents the range of horsep
 texsave using "$tables/summarized_table.tex", varlabels nofix replace `footnote' frag `title' marker(tab: tb1)
 
 
-************************Part 3 Estimation and Causal Inference ***********************
+************************Part 4 Estimation and Causal Inference ***********************
 use `original_data', clear
 
 label var ye "Year"
 label var li "Fuel Consumption"
 label var eurpr "Price in Euro"
 
-
+// Question 1 
 // I generated Y_ijt
 bysort ye ma: gen N_jt = pop / 4
 bysort ye ma model: egen total_model_sale = total(qu)
@@ -193,11 +201,11 @@ gen S_0jt = 1 - (total_car_sale / N_jt)
 
 bysort ye ma model: gen Y_ijt = log(S_ijt) - log(S_0jt)
 
-
+// Question 2
 eststo clear
 eststo model1: qui reg Y_ijt li eurpr, r
 
-
+//Question 4
 // I first transformed ma and model into numberic variables so that I could include them as fixed effecs in the regression
 encode ma, generate(market)
 encode model, generate(model_code)
