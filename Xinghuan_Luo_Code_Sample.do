@@ -13,7 +13,7 @@ set more off
 set varabbrev off
 
 // If the reader wants to replicate the results, he/she just needs to change this global path and put the data in raw_data file. 
-global code_sample "D:/OneDrive - The University of Chicago/2021 Fall/job searching/BFI/Dube"
+global code_sample "D:/OneDrive - The University of Chicago/code_sample"
 
 // I defined path to save the results 
 local top_file `""scripts" "results" "raw_data""'
