@@ -4,6 +4,7 @@ author: Xinghuan Luo <xinghuanluo@uchicago.edu>
 date: Dec. 17 2020
 header-includes:
   - \usepackage[utf8]{inputenc}
+  - \usepackage[a4paper, total={8in, 10in}]{geometry}
   - \usepackage{amsthm}
   - \usepackage{float}
   - \usepackage{amsmath, graphicx, booktabs, tabularx, caption, subcaption,amsfonts, bbm}
@@ -18,7 +19,7 @@ header-includes:
 
 ## Background
 
-[^1]: I finished this markdown file by `markstat`. The source code is in my github repository.
+[^1]: I finished this markdown file by `markstat`. The source code is in my github repository, [here](https://github.com/xinghuanluo/Xinghuan_Stata_Code_Sample_v2)
 
 This sample is my code for a data task. It has 4 parts: \
 - Part 0 Initialization \
@@ -144,7 +145,7 @@ foreach var of varlist _all {
 qui save `prepare_scatter'
 
 use `all_70_90', clear
-merge 1:1 _n using `prepare_scatter', nogen
+qui merge 1:1 _n using `prepare_scatter', nogen
 ```
 
 
